@@ -1,0 +1,506 @@
+[
+  {
+    "num": 1,
+    "team_a": "MÉXICO",
+    "team_b": "AFRICA SUL",
+    "score_a": "2",
+    "score_b": "0"
+  },
+  {
+    "num": 2,
+    "team_a": "COREIA SUL",
+    "team_b": "REP. TCHECA",
+    "score_a": "2",
+    "score_b": "1"
+  },
+  {
+    "num": 3,
+    "team_a": "CANADÁ",
+    "team_b": "BÓSNIA",
+    "score_a": "1",
+    "score_b": "1"
+  },
+  {
+    "num": 4,
+    "team_a": "EUA",
+    "team_b": "PARAGUAI",
+    "score_a": "4",
+    "score_b": "1"
+  },
+  {
+    "num": 5,
+    "team_a": "CATAR",
+    "team_b": "SUIÇA",
+    "score_a": "1",
+    "score_b": "1"
+  },
+  {
+    "num": 6,
+    "team_a": "BRASIL",
+    "team_b": "MARROCOS",
+    "score_a": "1",
+    "score_b": "1"
+  },
+  {
+    "num": 7,
+    "team_a": "HAITI",
+    "team_b": "ESCÓCIA",
+    "score_a": "0",
+    "score_b": "1"
+  },
+  {
+    "num": 8,
+    "team_a": "AUSTRALIA",
+    "team_b": "TURQUIA",
+    "score_a": "2",
+    "score_b": "0"
+  },
+  {
+    "num": 9,
+    "team_a": "ALEMANHA",
+    "team_b": "CURAÇAO",
+    "score_a": "7",
+    "score_b": "1"
+  },
+  {
+    "num": 10,
+    "team_a": "C. MARFIM",
+    "team_b": "EQUADOR",
+    "score_a": "1",
+    "score_b": "0"
+  },
+  {
+    "num": 11,
+    "team_a": "HOLANDA",
+    "team_b": "JAPÃO",
+    "score_a": "2",
+    "score_b": "2"
+  },
+  {
+    "num": 12,
+    "team_a": "SUÉCIA",
+    "team_b": "TUNÍSIA",
+    "score_a": "5",
+    "score_b": "1"
+  },
+  {
+    "num": 13,
+    "team_a": "ESPANHA",
+    "team_b": "CABO VERDE",
+    "score_a": "0",
+    "score_b": "0"
+  },
+  {
+    "num": 14,
+    "team_a": "BÉLGICA",
+    "team_b": "EGITO",
+    "score_a": "1",
+    "score_b": "1"
+  },
+  {
+    "num": 15,
+    "team_a": "A.SAUDITA",
+    "team_b": "URUGUAI",
+    "score_a": "1",
+    "score_b": "1"
+  },
+  {
+    "num": 16,
+    "team_a": "IRÃ",
+    "team_b": "N. ZELANDIA",
+    "score_a": "2",
+    "score_b": "2"
+  },
+  {
+    "num": 17,
+    "team_a": "FRANÇA",
+    "team_b": "SENEGAL",
+    "score_a": "3",
+    "score_b": "1"
+  },
+  {
+    "num": 18,
+    "team_a": "IRAQUE",
+    "team_b": "NORUEGA",
+    "score_a": "1",
+    "score_b": "4"
+  },
+  {
+    "num": 19,
+    "team_a": "ARGENTINA",
+    "team_b": "ARGÉLIA",
+    "score_a": "3",
+    "score_b": "0"
+  },
+  {
+    "num": 20,
+    "team_a": "AUSTRIA",
+    "team_b": "JORDÂNIA",
+    "score_a": "3",
+    "score_b": "1"
+  },
+  {
+    "num": 21,
+    "team_a": "PORTUGAL",
+    "team_b": "REP.CONGO",
+    "score_a": "1",
+    "score_b": "1"
+  },
+  {
+    "num": 22,
+    "team_a": "INGLATERRA",
+    "team_b": "CROÁCIA",
+    "score_a": "4",
+    "score_b": "2"
+  },
+  {
+    "num": 23,
+    "team_a": "GANA",
+    "team_b": "PANAMÁ",
+    "score_a": "1",
+    "score_b": "0"
+  },
+  {
+    "num": 24,
+    "team_a": "UZBEQUISTÃO",
+    "team_b": "COLÔMBIA",
+    "score_a": "1",
+    "score_b": "3"
+  },
+  {
+    "num": 25,
+    "team_a": "REP.CHECA",
+    "team_b": "ÁFRICA SUL",
+    "score_a": "1",
+    "score_b": "1"
+  },
+  {
+    "num": 26,
+    "team_a": "SUIÇA",
+    "team_b": "BÓSNIA",
+    "score_a": "4",
+    "score_b": "1"
+  },
+  {
+    "num": 27,
+    "team_a": "CANADÁ",
+    "team_b": "CATAR",
+    "score_a": "6",
+    "score_b": "0"
+  },
+  {
+    "num": 28,
+    "team_a": "MÉXICO",
+    "team_b": "CORÉIA SUL",
+    "score_a": "1",
+    "score_b": "0"
+  },
+  {
+    "num": 29,
+    "team_a": "EUA",
+    "team_b": "AUSTRÁLIA",
+    "score_a": "2",
+    "score_b": "0"
+  },
+  {
+    "num": 30,
+    "team_a": "ESCÓCIA",
+    "team_b": "MARROCOS",
+    "score_a": "0",
+    "score_b": "1"
+  },
+  {
+    "num": 31,
+    "team_a": "BRASIL",
+    "team_b": "HAITI",
+    "score_a": "3",
+    "score_b": "0"
+  },
+  {
+    "num": 32,
+    "team_a": "TURQUIA",
+    "team_b": "PARAGUAI",
+    "score_a": "0",
+    "score_b": "1"
+  },
+  {
+    "num": 33,
+    "team_a": "HOLANDA",
+    "team_b": "SUÉCIA",
+    "score_a": "5",
+    "score_b": "1"
+  },
+  {
+    "num": 34,
+    "team_a": "ALEMANHA",
+    "team_b": "C.MARFIM",
+    "score_a": "2",
+    "score_b": "1"
+  },
+  {
+    "num": 35,
+    "team_a": "EQUADOR",
+    "team_b": "CURAÇAO",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 36,
+    "team_a": "TUNÍSIA",
+    "team_b": "JAPÃO",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 37,
+    "team_a": "ESPANHA",
+    "team_b": "A.SAUDITA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 38,
+    "team_a": "BÉLGICA",
+    "team_b": "IRÃ",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 39,
+    "team_a": "URUGUAI",
+    "team_b": "CABO VERDE",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 40,
+    "team_a": "N.ZELÂNDIA",
+    "team_b": "EGITO",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 41,
+    "team_a": "ARGENTINA",
+    "team_b": "AUSTRIA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 42,
+    "team_a": "FRANÇA",
+    "team_b": "IRAQUE",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 43,
+    "team_a": "NORUEGA",
+    "team_b": "SENEGAL",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 44,
+    "team_a": "JORDÂNIA",
+    "team_b": "ARGÉLIA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 45,
+    "team_a": "PORTUGAL",
+    "team_b": "UZBEQUISTÃO",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 46,
+    "team_a": "INGLATERRA",
+    "team_b": "GANA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 47,
+    "team_a": "PANAMÁ",
+    "team_b": "CROÁCIA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 48,
+    "team_a": "COLÔMBIA",
+    "team_b": "REP.CONGO",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 49,
+    "team_a": "SUIÇA",
+    "team_b": "CANADÁ",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 50,
+    "team_a": "BÓSNIA",
+    "team_b": "CATAR",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 51,
+    "team_a": "ESCÓCIA",
+    "team_b": "BRASIL",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 52,
+    "team_a": "MARROCOS",
+    "team_b": "HAITI",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 53,
+    "team_a": "REP.CHECA",
+    "team_b": "MÉXICO",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 54,
+    "team_a": "AFRICA SUL",
+    "team_b": "CORÉIA SUL",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 55,
+    "team_a": "CURAÇAO",
+    "team_b": "C.MARFIM",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 56,
+    "team_a": "EQUADOR",
+    "team_b": "ALEMANHA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 57,
+    "team_a": "JAPÃO",
+    "team_b": "SUÉCIA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 58,
+    "team_a": "TUNÍSIA",
+    "team_b": "HOLANDA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 59,
+    "team_a": "TURQUIA",
+    "team_b": "EUA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 60,
+    "team_a": "PARAGUAI",
+    "team_b": "AUSTRÁLIA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 61,
+    "team_a": "NORUEGA",
+    "team_b": "FRANÇA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 62,
+    "team_a": "SENEGAL",
+    "team_b": "IRAQUE",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 63,
+    "team_a": "URUGUAI",
+    "team_b": "ESPANHA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 64,
+    "team_a": "CABO VERDE",
+    "team_b": "A.SAUDITA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 65,
+    "team_a": "EGITO",
+    "team_b": "IRÃ",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 66,
+    "team_a": "N.ZELÂNDIA",
+    "team_b": "BÉLGICA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 67,
+    "team_a": "PANAMÁ",
+    "team_b": "INGLATERRA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 68,
+    "team_a": "CROÁCIA",
+    "team_b": "GANA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 69,
+    "team_a": "REP.CONGO",
+    "team_b": "UZBEQUISTÃO",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 70,
+    "team_a": "COLÔMBIA",
+    "team_b": "PORTUGAL",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 71,
+    "team_a": "JORDÂNIA",
+    "team_b": "ARGENTINA",
+    "score_a": null,
+    "score_b": null
+  },
+  {
+    "num": 72,
+    "team_a": "ARGÉLIA",
+    "team_b": "AUSTRIA",
+    "score_a": null,
+    "score_b": null
+  }
+]
