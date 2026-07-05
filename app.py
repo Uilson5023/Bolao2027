@@ -70,6 +70,7 @@ def close_db(exception=None):
 def init_db():
     db = sqlite3.connect(DB_PATH)
     db.row_factory = sqlite3.Row
+    db.execute("PRAGMA foreign_keys = ON")
     db.executescript(
         """
         CREATE TABLE IF NOT EXISTS usuarios (
@@ -81,8 +82,16 @@ def init_db():
             criado_em TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS campeonatos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            ativo INTEGER NOT NULL DEFAULT 0,
+            criado_em TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS jogos (
-            id INTEGER PRIMARY KEY,            -- número do jogo (1..72)
+            id INTEGER PRIMARY KEY,            -- número do jogo (global, autoincrementa)
+            campeonato_id INTEGER REFERENCES campeonatos(id) ON DELETE CASCADE,
             time_a TEXT NOT NULL,
             time_b TEXT NOT NULL,
             gols_a INTEGER,                    -- resultado real (NULL = não jogado)
@@ -102,6 +111,29 @@ def init_db():
     )
     db.commit()
 
+    # Migração: bancos criados antes da tabela "campeonatos" existir não têm a
+    # coluna jogos.campeonato_id. Adiciona a coluna se necessário.
+    colunas_jogos = [row["name"] for row in db.execute("PRAGMA table_info(jogos)")]
+    if "campeonato_id" not in colunas_jogos:
+        db.execute(
+            "ALTER TABLE jogos ADD COLUMN campeonato_id INTEGER REFERENCES campeonatos(id) ON DELETE CASCADE"
+        )
+        db.commit()
+
+    # Garante que exista pelo menos um campeonato. Se não houver nenhum,
+    # cria o campeonato padrão "Copa do Mundo 2026" e o marca como ativo.
+    cur = db.execute("SELECT COUNT(*) AS c FROM campeonatos")
+    if cur.fetchone()["c"] == 0:
+        db.execute(
+            "INSERT INTO campeonatos (nome, ativo, criado_em) VALUES (?,1,?)",
+            ("Copa do Mundo 2026", datetime.utcnow().isoformat()),
+        )
+        db.commit()
+
+    campeonato_padrao_id = db.execute(
+        "SELECT id FROM campeonatos ORDER BY id LIMIT 1"
+    ).fetchone()["id"]
+
     # Carrega os 72 jogos a partir de games.json (apenas na primeira vez)
     cur = db.execute("SELECT COUNT(*) AS c FROM jogos")
     if cur.fetchone()["c"] == 0:
@@ -109,9 +141,10 @@ def init_db():
             games = json.load(f)
         for game in games:
             db.execute(
-                "INSERT INTO jogos (id, time_a, time_b, gols_a, gols_b) VALUES (?,?,?,?,?)",
+                "INSERT INTO jogos (id, campeonato_id, time_a, time_b, gols_a, gols_b) VALUES (?,?,?,?,?,?)",
                 (
                     game["num"],
+                    campeonato_padrao_id,
                     game["team_a"],
                     game["team_b"],
                     int(game["score_a"]) if game["score_a"] not in (None, "") else None,
@@ -119,6 +152,14 @@ def init_db():
                 ),
             )
         db.commit()
+
+    # Jogos "órfãos" (de bancos antigos, sem campeonato_id) são atribuídos
+    # ao campeonato padrão para não sumirem da aplicação.
+    db.execute(
+        "UPDATE jogos SET campeonato_id=? WHERE campeonato_id IS NULL",
+        (campeonato_padrao_id,),
+    )
+    db.commit()
 
     # Cria um usuário administrador padrão, se ainda não existir nenhum admin
     cur = db.execute("SELECT COUNT(*) AS c FROM usuarios WHERE is_admin = 1")
@@ -135,6 +176,11 @@ def init_db():
         )
         db.commit()
     db.close()
+
+
+def get_campeonato_ativo(db):
+    """Retorna a linha do campeonato atualmente ativo, ou None se não houver nenhum."""
+    return db.execute("SELECT * FROM campeonatos WHERE ativo = 1 LIMIT 1").fetchone()
 
 
 # ---------------------------------------------------------------------------
@@ -343,8 +389,15 @@ def palpites():
     db = get_db()
     usuario_id = session["usuario_id"]
 
+    campeonato = get_campeonato_ativo(db)
+    if campeonato is None:
+        flash("Não há nenhum campeonato ativo no momento. Fale com o organizador.", "warning")
+        return render_template("palpites.html", jogos=[], meus_palpites={}, rodadas=[], campeonato=None)
+
     if request.method == "POST":
-        jogos = db.execute("SELECT * FROM jogos ORDER BY id").fetchall()
+        jogos = db.execute(
+            "SELECT * FROM jogos WHERE campeonato_id=? ORDER BY id", (campeonato["id"],)
+        ).fetchall()
         atualizados = 0
         for jogo in jogos:
             # só permite inserir/editar palpite se o jogo ainda não começou
@@ -381,7 +434,9 @@ def palpites():
         flash(f"{atualizados} palpite(s) salvo(s) com sucesso!", "success")
         return redirect(url_for("palpites"))
 
-    jogos = db.execute("SELECT * FROM jogos ORDER BY id").fetchall()
+    jogos = db.execute(
+        "SELECT * FROM jogos WHERE campeonato_id=? ORDER BY id", (campeonato["id"],)
+    ).fetchall()
     meus_palpites = {
         row["jogo_id"]: row
         for row in db.execute(
@@ -400,6 +455,7 @@ def palpites():
         jogos=jogos,
         meus_palpites=meus_palpites,
         rodadas=rodadas,
+        campeonato=campeonato,
     )
 
 
@@ -410,6 +466,29 @@ def palpites():
 @app.route("/ranking")
 def ranking():
     db = get_db()
+
+    campeonatos = db.execute("SELECT * FROM campeonatos ORDER BY criado_em DESC").fetchall()
+
+    campeonato_id_param = request.args.get("campeonato_id", type=int)
+    if campeonato_id_param is not None:
+        campeonato = db.execute(
+            "SELECT * FROM campeonatos WHERE id=?", (campeonato_id_param,)
+        ).fetchone()
+    else:
+        campeonato = get_campeonato_ativo(db)
+        if campeonato is None and campeonatos:
+            campeonato = campeonatos[0]
+
+    if campeonato is None:
+        return render_template(
+            "ranking.html",
+            ranking=[],
+            jogos_com_resultado=0,
+            total_jogos=0,
+            campeonatos=campeonatos,
+            campeonato=None,
+        )
+
     linhas = db.execute(
         """
         SELECT u.id, u.nome,
@@ -421,23 +500,29 @@ def ranking():
                COUNT(p.id) AS qt_palpites
         FROM usuarios u
         LEFT JOIN palpites p ON p.usuario_id = u.id
+             AND p.jogo_id IN (SELECT id FROM jogos WHERE campeonato_id = ?)
         WHERE u.is_admin = 0
         GROUP BY u.id, u.nome
         ORDER BY total_pontos DESC, qt_10 DESC, qt_6 DESC, qt_4 DESC, u.nome ASC
         """,
-        (PTS_PLACAR_EXATO, PTS_VENCEDOR_GOLS, PTS_SOMENTE_VENCEDOR, PTS_GOLS_UMA_SELECAO),
+        (PTS_PLACAR_EXATO, PTS_VENCEDOR_GOLS, PTS_SOMENTE_VENCEDOR, PTS_GOLS_UMA_SELECAO, campeonato["id"]),
     ).fetchall()
 
     jogos_com_resultado = db.execute(
-        "SELECT COUNT(*) AS c FROM jogos WHERE gols_a IS NOT NULL"
+        "SELECT COUNT(*) AS c FROM jogos WHERE campeonato_id=? AND gols_a IS NOT NULL",
+        (campeonato["id"],),
     ).fetchone()["c"]
-    total_jogos = db.execute("SELECT COUNT(*) AS c FROM jogos").fetchone()["c"]
+    total_jogos = db.execute(
+        "SELECT COUNT(*) AS c FROM jogos WHERE campeonato_id=?", (campeonato["id"],)
+    ).fetchone()["c"]
 
     return render_template(
         "ranking.html",
         ranking=linhas,
         jogos_com_resultado=jogos_com_resultado,
         total_jogos=total_jogos,
+        campeonatos=campeonatos,
+        campeonato=campeonato,
     )
 
 
@@ -450,7 +535,12 @@ def ranking():
 @admin_required
 def admin_resultados():
     db = get_db()
+    campeonato = get_campeonato_ativo(db)
+
     if request.method == "POST":
+        if campeonato is None:
+            flash("Ative um campeonato antes de lançar resultados.", "danger")
+            return redirect(url_for("admin_campeonatos"))
         jogo_id = int(request.form["jogo_id"])
         gols_a = request.form.get("gols_a", "").strip()
         gols_b = request.form.get("gols_b", "").strip()
@@ -466,7 +556,13 @@ def admin_resultados():
         flash(f"Resultado do jogo {jogo_id} atualizado e pontuações recalculadas!", "success")
         return redirect(url_for("admin_resultados"))
 
-    jogos = db.execute("SELECT * FROM jogos ORDER BY id").fetchall()
+    if campeonato is None:
+        flash("Nenhum campeonato ativo. Crie ou ative um campeonato para lançar resultados.", "warning")
+        return render_template("admin_resultados.html", jogos=[], rodadas=[], campeonato=None)
+
+    jogos = db.execute(
+        "SELECT * FROM jogos WHERE campeonato_id=? ORDER BY id", (campeonato["id"],)
+    ).fetchall()
 
     rodadas = montar_rodadas(jogos)
     for rodada in rodadas:
@@ -474,7 +570,27 @@ def admin_resultados():
             1 for j in rodada["jogos"] if j["gols_a"] is not None
         )
 
-    return render_template("admin_resultados.html", jogos=jogos, rodadas=rodadas)
+    return render_template("admin_resultados.html", jogos=jogos, rodadas=rodadas, campeonato=campeonato)
+
+
+@app.route("/admin/resultados/<int:jogo_id>/excluir", methods=["POST"])
+@login_required
+@admin_required
+def admin_excluir_resultado(jogo_id):
+    db = get_db()
+    jogo = db.execute("SELECT * FROM jogos WHERE id=?", (jogo_id,)).fetchone()
+    if jogo is None:
+        flash("Jogo não encontrado.", "danger")
+        return redirect(url_for("admin_resultados"))
+    db.execute("UPDATE jogos SET gols_a=NULL, gols_b=NULL WHERE id=?", (jogo_id,))
+    db.commit()
+    recalcular_pontos_jogo(db, jogo_id)
+    flash(
+        f"Resultado do jogo {jogo_id} ({jogo['time_a']} x {jogo['time_b']}) foi excluído. "
+        "As pontuações desse jogo foram zeradas.",
+        "success",
+    )
+    return redirect(url_for("admin_resultados"))
 
 
 @app.route("/admin/recalcular-tudo")
@@ -487,6 +603,189 @@ def admin_recalcular_tudo():
         recalcular_pontos_jogo(db, j["id"])
     flash("Todas as pontuações foram recalculadas!", "success")
     return redirect(url_for("admin_resultados"))
+
+
+# ---------------------------------------------------------------------------
+# Rotas: Administração (campeonatos)
+# ---------------------------------------------------------------------------
+
+@app.route("/admin/campeonatos", methods=["GET", "POST"])
+@login_required
+@admin_required
+def admin_campeonatos():
+    db = get_db()
+
+    if request.method == "POST":
+        nome = request.form.get("nome", "").strip()
+        if not nome:
+            flash("Informe um nome para o campeonato.", "danger")
+            return redirect(url_for("admin_campeonatos"))
+
+        ativar_imediatamente = request.form.get("ativar") == "on"
+        if ativar_imediatamente:
+            db.execute("UPDATE campeonatos SET ativo=0")
+
+        db.execute(
+            "INSERT INTO campeonatos (nome, ativo, criado_em) VALUES (?,?,?)",
+            (nome, 1 if ativar_imediatamente else 0, datetime.utcnow().isoformat()),
+        )
+        db.commit()
+        flash(f"Campeonato \"{nome}\" criado com sucesso!", "success")
+        return redirect(url_for("admin_campeonatos"))
+
+    campeonatos = db.execute(
+        """
+        SELECT c.*,
+               COUNT(j.id) AS qt_jogos,
+               SUM(CASE WHEN j.gols_a IS NOT NULL THEN 1 ELSE 0 END) AS qt_finalizados
+        FROM campeonatos c
+        LEFT JOIN jogos j ON j.campeonato_id = c.id
+        GROUP BY c.id
+        ORDER BY c.criado_em DESC
+        """
+    ).fetchall()
+
+    return render_template("admin_campeonatos.html", campeonatos=campeonatos)
+
+
+@app.route("/admin/campeonatos/<int:campeonato_id>/ativar", methods=["POST"])
+@login_required
+@admin_required
+def admin_ativar_campeonato(campeonato_id):
+    db = get_db()
+    campeonato = db.execute("SELECT * FROM campeonatos WHERE id=?", (campeonato_id,)).fetchone()
+    if campeonato is None:
+        flash("Campeonato não encontrado.", "danger")
+        return redirect(url_for("admin_campeonatos"))
+    db.execute("UPDATE campeonatos SET ativo=0")
+    db.execute("UPDATE campeonatos SET ativo=1 WHERE id=?", (campeonato_id,))
+    db.commit()
+    flash(f"Campeonato \"{campeonato['nome']}\" agora está ativo para apostas e ranking.", "success")
+    return redirect(url_for("admin_campeonatos"))
+
+
+@app.route("/admin/campeonatos/<int:campeonato_id>/excluir", methods=["POST"])
+@login_required
+@admin_required
+def admin_excluir_campeonato(campeonato_id):
+    db = get_db()
+    campeonato = db.execute("SELECT * FROM campeonatos WHERE id=?", (campeonato_id,)).fetchone()
+    if campeonato is None:
+        flash("Campeonato não encontrado.", "danger")
+        return redirect(url_for("admin_campeonatos"))
+    # Apaga explicitamente os jogos do campeonato primeiro (isso já cascateia
+    # para os palpites, cuja FK sempre teve ON DELETE CASCADE). Evita depender
+    # de bancos antigos onde a FK jogos->campeonatos foi adicionada via ALTER TABLE.
+    db.execute("DELETE FROM jogos WHERE campeonato_id=?", (campeonato_id,))
+    db.execute("DELETE FROM campeonatos WHERE id=?", (campeonato_id,))
+    db.commit()
+    flash(
+        f"Campeonato \"{campeonato['nome']}\" excluído, junto com suas partidas e palpites relacionados.",
+        "success",
+    )
+    return redirect(url_for("admin_campeonatos"))
+
+
+# ---------------------------------------------------------------------------
+# Rotas: Administração (remodelar partidas)
+# ---------------------------------------------------------------------------
+
+@app.route("/admin/partidas")
+@login_required
+@admin_required
+def admin_partidas():
+    db = get_db()
+
+    campeonato_id = request.args.get("campeonato_id", type=int)
+    if campeonato_id is None:
+        ativo = get_campeonato_ativo(db)
+        campeonato_id = ativo["id"] if ativo else None
+
+    campeonatos = db.execute("SELECT * FROM campeonatos ORDER BY criado_em DESC").fetchall()
+
+    campeonato = None
+    jogos = []
+    if campeonato_id is not None:
+        campeonato = db.execute("SELECT * FROM campeonatos WHERE id=?", (campeonato_id,)).fetchone()
+        if campeonato is not None:
+            jogos = db.execute(
+                "SELECT * FROM jogos WHERE campeonato_id=? ORDER BY id", (campeonato_id,)
+            ).fetchall()
+
+    return render_template(
+        "admin_partidas.html",
+        campeonatos=campeonatos,
+        campeonato=campeonato,
+        jogos=jogos,
+    )
+
+
+@app.route("/admin/partidas/adicionar", methods=["POST"])
+@login_required
+@admin_required
+def admin_adicionar_partida():
+    db = get_db()
+    campeonato_id = request.form.get("campeonato_id", type=int)
+    time_a = request.form.get("time_a", "").strip()
+    time_b = request.form.get("time_b", "").strip()
+
+    campeonato = db.execute("SELECT * FROM campeonatos WHERE id=?", (campeonato_id,)).fetchone()
+    if campeonato is None:
+        flash("Selecione um campeonato válido.", "danger")
+        return redirect(url_for("admin_partidas"))
+
+    if not time_a or not time_b:
+        flash("Informe os dois times da partida.", "danger")
+        return redirect(url_for("admin_partidas", campeonato_id=campeonato_id))
+
+    db.execute(
+        "INSERT INTO jogos (campeonato_id, time_a, time_b, gols_a, gols_b) VALUES (?,?,?,NULL,NULL)",
+        (campeonato_id, time_a, time_b),
+    )
+    db.commit()
+    flash(f"Partida \"{time_a} x {time_b}\" adicionada ao campeonato \"{campeonato['nome']}\".", "success")
+    return redirect(url_for("admin_partidas", campeonato_id=campeonato_id))
+
+
+@app.route("/admin/partidas/<int:jogo_id>/editar", methods=["POST"])
+@login_required
+@admin_required
+def admin_editar_partida(jogo_id):
+    db = get_db()
+    jogo = db.execute("SELECT * FROM jogos WHERE id=?", (jogo_id,)).fetchone()
+    if jogo is None:
+        flash("Partida não encontrada.", "danger")
+        return redirect(url_for("admin_partidas"))
+
+    time_a = request.form.get("time_a", "").strip()
+    time_b = request.form.get("time_b", "").strip()
+    if not time_a or not time_b:
+        flash("Informe os dois times da partida.", "danger")
+        return redirect(url_for("admin_partidas", campeonato_id=jogo["campeonato_id"]))
+
+    db.execute("UPDATE jogos SET time_a=?, time_b=? WHERE id=?", (time_a, time_b, jogo_id))
+    db.commit()
+    flash(f"Partida {jogo_id} atualizada para \"{time_a} x {time_b}\".", "success")
+    return redirect(url_for("admin_partidas", campeonato_id=jogo["campeonato_id"]))
+
+
+@app.route("/admin/partidas/<int:jogo_id>/excluir", methods=["POST"])
+@login_required
+@admin_required
+def admin_excluir_partida(jogo_id):
+    db = get_db()
+    jogo = db.execute("SELECT * FROM jogos WHERE id=?", (jogo_id,)).fetchone()
+    if jogo is None:
+        flash("Partida não encontrada.", "danger")
+        return redirect(url_for("admin_partidas"))
+    campeonato_id = jogo["campeonato_id"]
+    db.execute("DELETE FROM jogos WHERE id=?", (jogo_id,))
+    db.commit()
+    flash(
+        f"Partida \"{jogo['time_a']} x {jogo['time_b']}\" removida, junto com os palpites relacionados a ela.",
+        "success",
+    )
+    return redirect(url_for("admin_partidas", campeonato_id=campeonato_id))
 
 init_db()
 if __name__ == "__main__":
