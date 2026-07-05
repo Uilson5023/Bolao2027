@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Ranking - Bolão{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+    <h2 style="margin:0;">🏆 Ranking {% if campeonato %}— {{ campeonato['nome'] }}{% endif %}</h2>
+    {% if campeonatos and campeonatos|length > 1 %}
+      <form method="get" style="margin:0;">
+        <select class="select-campeonato" name="campeonato_id" onchange="this.form.submit()">
+          {% for c in campeonatos %}
+            <option value="{{ c['id'] }}" {% if campeonato and c['id']==campeonato['id'] %}selected{% endif %}>
+              {{ c['nome'] }}{% if c['ativo'] %} (ativo){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+    {% endif %}
+  </div>
+
+  {% if campeonato is none %}
+    <div class="empty-state">Nenhum campeonato cadastrado ainda.</div>
+  {% else %}
+  <p style="color:#666;font-size:0.9rem;">
+    Jogos com resultado lançado: <strong>{{ jogos_com_resultado }}</strong> de
+    <strong>{{ total_jogos }}</strong>. O ranking é atualizado automaticamente
+    sempre que o organizador lança o resultado de uma partida.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Posição</th>
+        <th>Apostador</th>
+        <th>Pontos</th>
+        <th>10 pts</th>
+        <th>6 pts</th>
+        <th>4 pts</th>
+        <th>1 pt</th>
+        <th>Palpites enviados</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in ranking %}
+        <tr class="{{ 'pos-1' if loop.index==1 else ('pos-2' if loop.index==2 else ('pos-3' if loop.index==3 else '')) }}">
+          <td>{{ loop.index }}º</td>
+          <td style="text-align:left;font-weight:600;">{{ linha['nome'] }}</td>
+          <td><strong>{{ linha['total_pontos'] }}</strong></td>
+          <td>{{ linha['qt_10'] }}</td>
+          <td>{{ linha['qt_6'] }}</td>
+          <td>{{ linha['qt_4'] }}</td>
+          <td>{{ linha['qt_1'] }}</td>
+          <td>{{ linha['qt_palpites'] }} / {{ total_jogos }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8">Nenhum apostador cadastrado ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>Como funciona a pontuação</h3>
+  <ul style="font-size:0.92rem; color:#444;">
+    <li><strong>10 pts</strong> — Placar exato</li>
+    <li><strong>6 pts</strong> — Acertou o vencedor (ou empate) + o nº de gols de uma das seleções</li>
+    <li><strong>4 pts</strong> — Acertou somente o vencedor</li>
+    <li><strong>4 pts</strong> — Acertou que haveria empate, mas não o placar exato</li>
+    <li><strong>1 pt</strong> — Acertou apenas o número de gols de uma das seleções</li>
+    <li><strong>0 pts</strong> — Não acertou nada</li>
+  </ul>
+</div>
+{% endblock %}

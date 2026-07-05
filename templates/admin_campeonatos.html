@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Campeonatos - Bolão{% endblock %}
+{% block content %}
+<div class="card">
+  <h2>🏆 Criar novo campeonato</h2>
+  <p style="color:#666;font-size:0.9rem;">
+    Um campeonato é um conjunto independente de partidas, palpites e ranking
+    (por exemplo: "Copa do Mundo 2026", "Copa América 2027" etc.). Apenas
+    <strong>um campeonato fica ativo</strong> por vez — é nele que os
+    apostadores enviam palpites e o organizador lança resultados.
+  </p>
+  <form method="post" style="max-width:480px;">
+    <div class="form-group">
+      <label>Nome do campeonato</label>
+      <input type="text" name="nome" placeholder="Ex: Copa do Mundo 2026" required>
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+      <input type="checkbox" id="ativar" name="ativar" style="width:auto;">
+      <label for="ativar" style="margin:0;font-weight:500;">Ativar este campeonato imediatamente</label>
+    </div>
+    <button class="btn" type="submit">Criar campeonato</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Campeonatos cadastrados</h2>
+  {% if not campeonatos %}
+    <div class="empty-state">Nenhum campeonato cadastrado ainda.</div>
+  {% else %}
+    {% for c in campeonatos %}
+      <div class="campeonato-item">
+        <div>
+          <span class="campeonato-nome">{{ c['nome'] }}</span>
+          {% if c['ativo'] %}
+            <span class="badge-ativo">ATIVO</span>
+          {% else %}
+            <span class="badge-inativo">inativo</span>
+          {% endif %}
+          <div class="campeonato-meta">
+            {{ c['qt_jogos'] or 0 }} partida(s) — {{ c['qt_finalizados'] or 0 }} com resultado lançado
+          </div>
+        </div>
+        <div class="toolbar">
+          <a class="btn btn-sm btn-outline" style="text-decoration:none;"
+             href="{{ url_for('admin_partidas', campeonato_id=c['id']) }}">Remodelar partidas</a>
+          <a class="btn btn-sm btn-outline" style="text-decoration:none;"
+             href="{{ url_for('ranking', campeonato_id=c['id']) }}">Ver ranking</a>
+          {% if not c['ativo'] %}
+            <form method="post" class="inline-form"
+                  action="{{ url_for('admin_ativar_campeonato', campeonato_id=c['id']) }}"
+                  onsubmit="return confirm('Ativar \'{{ c['nome'] }}\'? Ele passará a ser o campeonato usado para palpites, ranking e lançamento de resultados.');">
+              <button class="btn btn-sm" type="submit">Ativar</button>
+            </form>
+          {% endif %}
+          <form method="post" class="inline-form"
+                action="{{ url_for('admin_excluir_campeonato', campeonato_id=c['id']) }}"
+                onsubmit="return confirm('Excluir o campeonato \'{{ c['nome'] }}\'? Isso apaga TODAS as partidas e palpites relacionados a ele, permanentemente.');">
+            <button class="btn btn-sm btn-danger" type="submit">Excluir</button>
+          </form>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Remodelar Partidas - Bolão{% endblock %}
+{% block content %}
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+    <h2 style="margin:0;">🛠️ Remodelar partidas</h2>
+    {% if campeonatos and campeonatos|length > 1 %}
+      <form method="get" style="margin:0;">
+        <select class="select-campeonato" name="campeonato_id" onchange="this.form.submit()">
+          {% for c in campeonatos %}
+            <option value="{{ c['id'] }}" {% if campeonato and c['id']==campeonato['id'] %}selected{% endif %}>
+              {{ c['nome'] }}{% if c['ativo'] %} (ativo){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+    {% endif %}
+  </div>
+  <p style="color:#666;font-size:0.9rem;">
+    Aqui você pode adicionar novas partidas, corrigir os nomes dos times ou
+    remover uma partida de um campeonato. Ao remover uma partida, os palpites
+    enviados para ela também são apagados.
+  </p>
+</div>
+
+{% if campeonato is none %}
+<div class="card">
+  <div class="empty-state">
+    Nenhum campeonato selecionado.<br>
+    <a href="{{ url_for('admin_campeonatos') }}">Crie um campeonato</a> antes de cadastrar partidas.
+  </div>
+</div>
+{% else %}
+
+<div class="card">
+  <h3 style="margin-top:0;">Adicionar partida a "{{ campeonato['nome'] }}"</h3>
+  <form method="post" action="{{ url_for('admin_adicionar_partida') }}"
+        style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    <input type="hidden" name="campeonato_id" value="{{ campeonato['id'] }}">
+    <div class="form-group" style="flex:1;min-width:180px;margin-bottom:0;">
+      <label>Time A</label>
+      <input type="text" name="time_a" placeholder="Ex: BRASIL" required>
+    </div>
+    <div class="form-group" style="flex:1;min-width:180px;margin-bottom:0;">
+      <label>Time B</label>
+      <input type="text" name="time_b" placeholder="Ex: ARGENTINA" required>
+    </div>
+    <button class="btn" type="submit">Adicionar partida</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Partidas de "{{ campeonato['nome'] }}" ({{ jogos|length }})</h3>
+  {% if not jogos %}
+    <div class="empty-state">Nenhuma partida cadastrada ainda neste campeonato.</div>
+  {% else %}
+  <div style="max-height:560px;overflow-y:auto;">
+    <table>
+      <thead>
+        <tr><th>Jogo</th><th>Time A</th><th>Time B</th><th>Resultado</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for jogo in jogos %}
+        <tr>
+          <td>{{ jogo['id'] }}</td>
+          <td colspan="2" style="padding:0;">
+            <form method="post" class="inline-form"
+                  action="{{ url_for('admin_editar_partida', jogo_id=jogo['id']) }}"
+                  style="display:flex;gap:6px;justify-content:center;align-items:center;padding:8px 0;">
+              <input type="text" name="time_a" value="{{ jogo['time_a'] }}" style="width:150px;" required>
+              <span>x</span>
+              <input type="text" name="time_b" value="{{ jogo['time_b'] }}" style="width:150px;" required>
+              <button class="btn btn-sm" type="submit">Salvar</button>
+            </form>
+          </td>
+          <td>
+            {% if jogo['gols_a'] is not none %}
+              {{ jogo['gols_a'] }} x {{ jogo['gols_b'] }}
+            {% else %}
+              <span style="color:#aaa;">em aberto</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="post" class="inline-form"
+                  action="{{ url_for('admin_excluir_partida', jogo_id=jogo['id']) }}"
+                  onsubmit="return confirm('Remover a partida {{ jogo['time_a'] }} x {{ jogo['time_b'] }}? Os palpites enviados para ela também serão apagados.');">
+              <button class="btn btn-sm btn-danger" type="submit">Excluir</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+  <p style="margin-top:16px;">
+    <a class="btn btn-outline" style="text-decoration:none;display:inline-block;"
+       href="{{ url_for('admin_resultados') }}">Ir para lançamento de resultados</a>
+  </p>
+</div>
+{% endif %}
+{% endblock %}

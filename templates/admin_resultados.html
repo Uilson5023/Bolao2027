@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Lançar Resultados - Bolão{% endblock %}
+{% block content %}
+{% if campeonato is none %}
+<div class="card">
+  <h2>⚙️ Lançar resultados das partidas (organizador)</h2>
+  <div class="empty-state">
+    Nenhum campeonato ativo no momento.<br>
+    <a href="{{ url_for('admin_campeonatos') }}">Crie ou ative um campeonato</a> para começar a lançar resultados.
+  </div>
+</div>
+{% else %}
+<div class="card carousel-card">
+  <h2>⚙️ Lançar resultados — {{ campeonato['nome'] }}</h2>
+  <p style="color:#666;font-size:0.9rem;">
+    Ao salvar o resultado de um jogo, a pontuação de <strong>todos</strong> os
+    apostadores que palpitaram nessa partida é recalculada automaticamente e o
+    ranking é atualizado. Os jogos estão divididos em rodadas de 10 — use as setas
+    ou clique numa rodada para navegar. Use <strong>Excluir resultado</strong> para
+    desfazer um placar lançado por engano (o jogo volta a ficar em aberto).
+  </p>
+
+  <div class="rodada-contador-topo"></div>
+
+  <div class="rodada-nav">
+    <button type="button" class="nav-arrow nav-prev" aria-label="Rodada anterior">‹</button>
+    <div class="rodada-pills">
+      {% for rodada in rodadas %}
+        <button type="button" class="rodada-pill{% if rodada.lancados == rodada.jogos|length %} completa{% endif %}{% if loop.first %} ativa{% endif %}">
+          Rodada {{ rodada.numero }}
+          <span class="contador">{{ rodada.lancados }}/{{ rodada.jogos|length }}</span>
+        </button>
+      {% endfor %}
+    </div>
+    <button type="button" class="nav-arrow nav-next" aria-label="Próxima rodada">›</button>
+  </div>
+
+  <div class="carousel-track">
+    {% for rodada in rodadas %}
+      <div class="rodada-slide{% if loop.first %} ativa{% endif %}">
+        <h3 class="rodada-titulo">
+          Rodada {{ rodada.numero }} — jogos {{ rodada.jogos[0]['id'] }} a {{ rodada.jogos[-1]['id'] }}
+        </h3>
+        <table>
+          <thead>
+            <tr><th>Jogo</th><th>Confronto</th><th>Gols A</th><th>Gols B</th><th colspan="2"></th></tr>
+          </thead>
+          <tbody>
+            {% for jogo in rodada.jogos %}
+            <tr>
+              <td>{{ jogo['id'] }}</td>
+              <td style="text-align:left;">{{ jogo['time_a'] }} x {{ jogo['time_b'] }}</td>
+              <td colspan="2" style="padding:0;">
+                <form method="post" class="inline-form" style="display:flex;gap:6px;justify-content:center;align-items:center;padding:8px 0;">
+                  <input type="hidden" name="jogo_id" value="{{ jogo['id'] }}">
+                  <input type="number" min="0" name="gols_a" value="{{ jogo['gols_a'] if jogo['gols_a'] is not none else '' }}">
+                  <span>x</span>
+                  <input type="number" min="0" name="gols_b" value="{{ jogo['gols_b'] if jogo['gols_b'] is not none else '' }}">
+                  <button class="btn btn-sm" type="submit">Salvar</button>
+                </form>
+              </td>
+              <td>
+                {% if jogo['gols_a'] is not none %}
+                <form method="post" class="inline-form"
+                      action="{{ url_for('admin_excluir_resultado', jogo_id=jogo['id']) }}"
+                      onsubmit="return confirm('Excluir o resultado do jogo {{ jogo['id'] }} ({{ jogo['time_a'] }} x {{ jogo['time_b'] }})? As pontuações desse jogo serão zeradas.');">
+                  <button class="btn btn-sm btn-danger" type="submit">Excluir resultado</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endfor %}
+  </div>
+
+  <p style="margin-top:16px;" class="toolbar">
+    <a class="btn" href="{{ url_for('admin_recalcular_tudo') }}" style="text-decoration:none;display:inline-block;">
+      Recalcular pontuação de todos os jogos
+    </a>
+    <a class="btn btn-outline" href="{{ url_for('admin_partidas') }}" style="text-decoration:none;display:inline-block;">
+      Remodelar partidas
+    </a>
+  </p>
+</div>
+{% endif %}
+{% endblock %}
